@@ -11,7 +11,7 @@ use notify_debouncer_mini::new_debouncer;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "file_watcher", about = "Watches a folder for file changes.")]
+#[structopt(name = "scriptlink", about = "Watches a folder for file changes.")]
 struct Opt {
     #[structopt(short, long, default_value = ".")]
     path: String,
@@ -59,9 +59,6 @@ async fn process_file(path: PathBuf) -> Result<()> {
             // Run the script and get the output.
             let (status, output) = run_script(ext, &script_path)?;
 
-            // Delete the script file.
-            // fs::remove_file(&path)?;
-
             // Write the output to a file.
             write_output(status, script_name, output)?;
         }
@@ -92,7 +89,7 @@ fn write_output(status: &str, script_name: &str, output: String) -> Result<()> {
     // Create a timestamped filename.
     fs::create_dir_all("results")?;
     let timestamp = Utc::now().format("%Y-%m-%dT%H-%M-%S");
-    let result_filename = format!("results/{}_{}_{}.txt", timestamp, script_name, status);
+    let result_filename = format!("results/{}_{}_{}.txt", script_name, timestamp, status);
 
     // Write the output to the file.
     let mut result_file = File::create(&result_filename)?;
