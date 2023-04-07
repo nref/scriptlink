@@ -13,7 +13,7 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "file_watcher", about = "Watches a folder for file changes.")]
 struct Opt {
-    #[structopt(short, long, default_value = "R:/")]
+    #[structopt(short, long, default_value = ".")]
     path: String,
 }
 
@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
 
     debouncer
         .watcher()
-        .watch(Path::new("."), RecursiveMode::Recursive)
+        .watch(Path::new(&opt.path), RecursiveMode::Recursive)
         .unwrap();
 
     println!(
@@ -60,7 +60,7 @@ async fn process_file(path: PathBuf) -> Result<()> {
             let (status, output) = run_script(ext, &script_path)?;
 
             // Delete the script file.
-            fs::remove_file(&path)?;
+            // fs::remove_file(&path)?;
 
             // Write the output to a file.
             write_output(status, script_name, output)?;
