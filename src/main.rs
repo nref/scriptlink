@@ -39,7 +39,6 @@ async fn main() -> Result<()> {
     for events in rx {
         for vec in events {
             for e in vec {
-                println!("{:?}", e.path);
                 let _ = process_file(e.path).await;
             }
         }
@@ -51,15 +50,18 @@ async fn main() -> Result<()> {
 async fn process_file(path: PathBuf) -> Result<()> {
     if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
         if ext == "sh" || ext == "ps1" {
-            let script_path = path.clone();
-            let script_name = path.file_name().unwrap().to_str().unwrap();
 
-            println!("{}", format!("Processing file: {}", script_name).white());
+
+            // Enclose script path in quotes
+            let script_path = format!("\"{}\"", path.to_string_lossy());
+            println!("{}", format!("Processing file: {}", &script_path).white());
+            let script_path = PathBuf::from(script_path);
 
             // Run the script and get the output.
             let (status, output) = run_script(ext, &script_path)?;
 
             // Write the output to a file.
+            let script_name = path.file_name().unwrap().to_str().unwrap();
             write_output(status, script_name, output)?;
         }
     }
@@ -71,7 +73,13 @@ fn run_script<'a>(ext: &'a str, script_path: &'a Path) -> Result<(&'a str, Strin
     let output = if ext == "sh" {
         Command::new("bash").arg(script_path).output()?
     } else {
-        Command::new("powershell").arg(script_path).output()?
+        Command::new("powershell")
+            .arg("-NoProfile")
+            .arg("-ExecutionPolicy")
+            .arg("Bypass")
+            .arg("-Command")
+            .arg(format!("& {}", script_path.to_string_lossy()))
+            .output()?
     };
 
     let (status, output) = if output.status.success() {
